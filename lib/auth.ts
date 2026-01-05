@@ -13,20 +13,30 @@ export interface User {
 const SESSION_COOKIE_NAME = 'finance_session';
 const SESSION_SECRET = process.env.SESSION_SECRET || 'your-secret-key-change-in-production';
 
-function getUsersFile(): string {
+function ensureDataDir() {
   const dataDir = path.join(process.cwd(), 'data');
   if (!fs.existsSync(dataDir)) {
     fs.mkdirSync(dataDir, { recursive: true });
   }
-  return path.join(dataDir, 'users.json');
+  return dataDir;
+}
+
+function getUsersFile(): string {
+  const dataDir = ensureDataDir();
+  const usersFile = path.join(dataDir, 'users.json');
+  if (!fs.existsSync(usersFile)) {
+    fs.writeFileSync(usersFile, JSON.stringify([], null, 2));
+  }
+  return usersFile;
 }
 
 function getSessionsFile(): string {
-  const dataDir = path.join(process.cwd(), 'data');
-  if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir, { recursive: true });
+  const dataDir = ensureDataDir();
+  const sessionsFile = path.join(dataDir, 'sessions.json');
+  if (!fs.existsSync(sessionsFile)) {
+    fs.writeFileSync(sessionsFile, JSON.stringify({}, null, 2));
   }
-  return path.join(dataDir, 'sessions.json');
+  return sessionsFile;
 }
 
 // Simple password hashing (in production, use bcrypt)

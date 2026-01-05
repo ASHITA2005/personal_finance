@@ -2,22 +2,31 @@ import fs from 'fs';
 import path from 'path';
 import { Category, Expense } from './types';
 
-const dataDir = path.join(process.cwd(), 'data');
-const categoriesFile = path.join(dataDir, 'categories.json');
-const expensesFile = path.join(dataDir, 'expenses.json');
-
-// Ensure data directory exists
-if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir, { recursive: true });
+// Lazy initialization - only create directory/files when needed
+function ensureDataDir() {
+  const dataDir = path.join(process.cwd(), 'data');
+  if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir, { recursive: true });
+  }
+  return dataDir;
 }
 
-// Initialize files if they don't exist
-if (!fs.existsSync(categoriesFile)) {
-  fs.writeFileSync(categoriesFile, JSON.stringify([], null, 2));
+function getCategoriesFile(): string {
+  const dataDir = ensureDataDir();
+  const categoriesFile = path.join(dataDir, 'categories.json');
+  if (!fs.existsSync(categoriesFile)) {
+    fs.writeFileSync(categoriesFile, JSON.stringify([], null, 2));
+  }
+  return categoriesFile;
 }
 
-if (!fs.existsSync(expensesFile)) {
-  fs.writeFileSync(expensesFile, JSON.stringify([], null, 2));
+function getExpensesFile(): string {
+  const dataDir = ensureDataDir();
+  const expensesFile = path.join(dataDir, 'expenses.json');
+  if (!fs.existsSync(expensesFile)) {
+    fs.writeFileSync(expensesFile, JSON.stringify([], null, 2));
+  }
+  return expensesFile;
 }
 
 // Default categories template
@@ -34,6 +43,7 @@ const defaultCategoriesTemplate = [
 // Database interface
 class Database {
   private readCategories(userId: number): Category[] {
+    const categoriesFile = getCategoriesFile();
     const data = fs.readFileSync(categoriesFile, 'utf-8');
     const categories = JSON.parse(data) as Category[];
     
@@ -61,6 +71,7 @@ class Database {
   }
 
   private writeCategories(categories: Category[], userId: number): void {
+    const categoriesFile = getCategoriesFile();
     const data = fs.readFileSync(categoriesFile, 'utf-8');
     const allCategories = JSON.parse(data) as Category[];
     
@@ -72,12 +83,14 @@ class Database {
   }
 
   private readExpenses(userId: number): Expense[] {
+    const expensesFile = getExpensesFile();
     const data = fs.readFileSync(expensesFile, 'utf-8');
     const expenses = JSON.parse(data) as Expense[];
     return expenses.filter(exp => exp.user_id === userId);
   }
 
   private writeExpenses(expenses: Expense[], userId: number): void {
+    const expensesFile = getExpensesFile();
     const data = fs.readFileSync(expensesFile, 'utf-8');
     const allExpenses = JSON.parse(data) as Expense[];
     
@@ -198,6 +211,7 @@ class Database {
   // Migration helper - assign existing data to a user
   migrateDataToUser(userId: number): void {
     // Migrate categories
+    const categoriesFile = getCategoriesFile();
     const categoriesData = fs.readFileSync(categoriesFile, 'utf-8');
     const categories = JSON.parse(categoriesData) as Category[];
     const unmigratedCategories = categories.filter(cat => !cat.user_id);
@@ -214,6 +228,7 @@ class Database {
     }
 
     // Migrate expenses
+    const expensesFile = getExpensesFile();
     const expensesData = fs.readFileSync(expensesFile, 'utf-8');
     const expenses = JSON.parse(expensesData) as Expense[];
     const unmigratedExpenses = expenses.filter(exp => !exp.user_id);
@@ -231,7 +246,7 @@ class Database {
   }
 }
 
-// Initialize default categories on first run
+// Create database instance (lazy initialization)
 const db = new Database();
 
 export default db;
