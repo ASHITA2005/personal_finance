@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ExpenseWithCategory, Category, ReportData } from '@/lib/types';
 import { format, subDays, startOfMonth, endOfMonth } from 'date-fns';
 import { BarChart3, Calendar, TrendingUp, Award } from 'lucide-react';
@@ -18,11 +18,7 @@ export default function Reports({ expenses, categories }: ReportsProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [viewMode, setViewMode] = useState<'daily' | 'weekly' | 'monthly'>('daily');
 
-  useEffect(() => {
-    generateReport();
-  }, [startDate, endDate]);
-
-  const generateReport = async () => {
+  const generateReport = useCallback(async () => {
     setIsLoading(true);
     try {
       const response = await fetch(`/api/reports?startDate=${startDate}&endDate=${endDate}`);
@@ -37,7 +33,12 @@ export default function Reports({ expenses, categories }: ReportsProps) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [startDate, endDate]);
+
+  useEffect(() => {
+    generateReport();
+  }, [generateReport]);
+
 
   const quickDateRange = (days: number) => {
     setEndDate(format(new Date(), 'yyyy-MM-dd'));

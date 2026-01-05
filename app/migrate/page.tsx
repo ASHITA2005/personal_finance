@@ -43,7 +43,7 @@ export default function MigratePage() {
             Data Migration
           </h1>
           <p className="text-gray-600 text-sm">
-            This will create user "ashita" and migrate your existing data to that account.
+            This will create user &quot;ashita&quot; and migrate your existing data to that account.
           </p>
         </div>
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Dashboard from '@/components/Dashboard';
 import ExpenseForm from '@/components/ExpenseForm';
@@ -21,18 +21,7 @@ export default function Home() {
   const [currentUser, setCurrentUser] = useState<{ username: string } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    checkAuth();
-  }, []);
-
-  useEffect(() => {
-    if (currentUser) {
-      fetchExpenses();
-      fetchCategories();
-    }
-  }, [refreshKey, currentUser]);
-
-  const checkAuth = async () => {
+  const checkAuth = useCallback(async () => {
     try {
       const response = await fetch('/api/auth/me');
       if (response.ok) {
@@ -46,19 +35,9 @@ export default function Home() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [router]);
 
-  const handleLogout = async () => {
-    try {
-      await fetch('/api/auth/logout', { method: 'POST' });
-      router.push('/login');
-      router.refresh();
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
-  };
-
-  const fetchExpenses = async () => {
+  const fetchExpenses = useCallback(async () => {
     try {
       const response = await fetch('/api/expenses');
       if (response.status === 401) {
@@ -70,9 +49,9 @@ export default function Home() {
     } catch (error) {
       console.error('Error fetching expenses:', error);
     }
-  };
+  }, [router]);
 
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
       const response = await fetch('/api/categories');
       if (response.status === 401) {
@@ -83,6 +62,27 @@ export default function Home() {
       setCategories(data);
     } catch (error) {
       console.error('Error fetching categories:', error);
+    }
+  }, [router]);
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
+
+  useEffect(() => {
+    if (currentUser) {
+      fetchExpenses();
+      fetchCategories();
+    }
+  }, [refreshKey, currentUser, fetchExpenses, fetchCategories]);
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+      router.push('/login');
+      router.refresh();
+    } catch (error) {
+      console.error('Logout error:', error);
     }
   };
 
