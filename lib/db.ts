@@ -111,7 +111,7 @@ class Database {
     return categories.find(cat => cat.id === id);
   }
 
-  createCategory(category: Omit<Category, 'id' | 'created_at'>, userId: number): Category {
+  createCategory(category: Omit<Category, 'id' | 'created_at' | 'user_id'>, userId: number): Category {
     const categories = this.readCategories(userId);
     const newId = categories.length > 0 ? Math.max(...categories.map(c => c.id)) + 1 : 1;
     const newCategory: Category = {
